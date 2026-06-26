@@ -2,7 +2,7 @@ global:
   interval_minutes: 5
   window_hours: 24
   timeout_ms: 30000
-  database_path: inspect.db
+  database_path: data/inspect.db
 
 colors:
   no_data: "#e5e7eb"

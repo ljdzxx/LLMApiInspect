@@ -80,23 +80,26 @@ def load_config(path: str | Path = "config.yaml") -> AppConfig:
     if not isinstance(raw, dict):
         raise ValueError("config.yaml must contain a mapping at the top level")
 
-    global_config = _parse_global(raw.get("global") or {})
+    global_config = _parse_global(raw.get("global") or {}, config_path.parent)
     colors = _parse_colors(raw.get("colors") or {})
     targets = _parse_targets(raw.get("targets") or [])
 
     return AppConfig(global_config=global_config, colors=colors, targets=targets)
 
 
-def _parse_global(raw: dict[str, Any]) -> GlobalConfig:
+def _parse_global(raw: dict[str, Any], config_dir: Path) -> GlobalConfig:
     interval_minutes = _positive_int(raw, "interval_minutes")
     window_hours = _positive_int(raw, "window_hours")
     timeout_ms = _positive_int(raw, "timeout_ms")
-    database_path = str(raw.get("database_path") or "inspect.db")
+    raw_database_path = str(raw.get("database_path") or "inspect.db")
+    database_path = Path(raw_database_path)
+    if not database_path.is_absolute():
+        database_path = config_dir / database_path
     return GlobalConfig(
         interval_minutes=interval_minutes,
         window_hours=window_hours,
         timeout_ms=timeout_ms,
-        database_path=database_path,
+        database_path=str(database_path),
     )
 
 

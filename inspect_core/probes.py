@@ -56,7 +56,7 @@ def run_probe(target: TargetConfig, timeout_ms: int, interval_minutes: int) -> P
             else:
                 raise ValueError(f"Unsupported protocol: {target.protocol}")
     except Exception as exc:
-        error = _shorten_error(exc)
+        error = _shorten_error(exc, target.api_key)
 
     first_token_at_ms = None
     latency_ms = None
@@ -136,8 +136,12 @@ def _probe_gemini(client: httpx.Client, target: TargetConfig) -> tuple[int, str 
         },
     }
     path_model = target.model if target.model.startswith("models/") else f"models/{target.model}"
-    url = f"{target.base_url}/v1beta/{path_model}:streamGenerateContent?alt=sse&key={target.api_key}"
-    with client.stream("POST", url, headers={"content-type": "application/json"}, json=payload) as response:
+    url = f"{target.base_url}/v1beta/{path_model}:streamGenerateContent?alt=sse"
+    headers = {
+        "content-type": "application/json",
+        "x-goog-api-key": target.api_key,
+    }
+    with client.stream("POST", url, headers=headers, json=payload) as response:
         response.raise_for_status()
         return response.status_code, _first_text_from_sse(response.iter_lines(), _extract_gemini_text)
 
@@ -231,9 +235,15 @@ def _clean_text(value: str | None) -> str | None:
     return stripped or None
 
 
-def _shorten_error(exc: Exception) -> str:
+def _shorten_error(exc: Exception, api_key: str) -> str:
     message = str(exc)
     if isinstance(exc, httpx.HTTPStatusError):
         response_text = exc.response.text[:500] if exc.response is not None else ""
         message = f"HTTP {exc.response.status_code}: {response_text or exc.response.reason_phrase}"
-    return message[:1000]
+    return _mask_secret(message, api_key)[:1000]
+
+
+def _mask_secret(value: str, secret: str) -> str:
+    if not secret:
+        return value
+    return value.replace(secret, "***")

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, wait
+import logging
 import threading
-import time
 
 from inspect_core.config import AppConfig, TargetConfig
 from inspect_core.db import insert_probe_result
 from inspect_core.probes import run_probe
+
+
+logger = logging.getLogger(__name__)
 
 
 class ProbeScheduler:
@@ -20,6 +23,7 @@ class ProbeScheduler:
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return
+        logger.info("Starting probe scheduler")
         self._thread = threading.Thread(target=self._run_loop, name="probe-scheduler", daemon=True)
         self._thread.start()
 
@@ -37,6 +41,7 @@ class ProbeScheduler:
     def _run_once(self) -> None:
         enabled_targets = self.config.enabled_targets
         if not enabled_targets:
+            logger.info("No enabled probe targets")
             return
 
         worker_count = max(1, min(8, len(enabled_targets)))
@@ -56,6 +61,25 @@ class ProbeScheduler:
                 interval_minutes=self.config.global_config.interval_minutes,
             )
             insert_probe_result(self.config.global_config.database_path, result.as_dict())
+            if result.success:
+                logger.info(
+                    "Probe succeeded: target=%s protocol=%s model=%s latency_ms=%s",
+                    target.title,
+                    target.protocol,
+                    target.model,
+                    result.latency_ms,
+                )
+            else:
+                logger.warning(
+                    "Probe failed: target=%s protocol=%s model=%s status=%s error=%s",
+                    target.title,
+                    target.protocol,
+                    target.model,
+                    result.http_status,
+                    result.error,
+                )
+        except Exception:
+            logger.exception("Probe worker crashed: target=%s", target.title)
         finally:
             self._clear_active(target)
 

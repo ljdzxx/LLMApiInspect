@@ -65,6 +65,7 @@ http://127.0.0.1:8050
 INSPECT_HOST=0.0.0.0
 INSPECT_PORT=8050
 INSPECT_DEBUG=1
+INSPECT_CONFIG=config.yaml
 ```
 
 ## Docker 运行
@@ -75,28 +76,69 @@ INSPECT_DEBUG=1
 docker build -t llm-api-inspect .
 ```
 
-通过挂载配置文件运行：
+Linux/macOS 下，运行时挂载项目目录作为运行数据目录：
 
 ```bash
-docker run --rm -p 8050:8050 \
-  -v "$(pwd)/config.yaml:/app/config.yaml:ro" \
-  -v inspect-data:/data \
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -v "$(pwd):/app/runtime" \
   llm-api-inspect
 ```
 
-如果希望 Docker 中的 SQLite 数据持久化，建议在 `config.yaml` 中这样配置：
+如果 Linux 主机启用了 SELinux，bind mount 需要加 `:Z`：
+
+```bash
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -v "$(pwd):/app/runtime:Z" \
+  llm-api-inspect
+```
+
+SQLite 路径配置为项目数据目录下的文件：
 
 ```yaml
 global:
-  database_path: /data/inspect.db
+  database_path: data/inspect.db
 ```
+
+最终 SQLite 文件会持久化在宿主机的 `./data/inspect.db`。
 
 PowerShell 示例：
 
 ```powershell
-docker run --rm -p 8050:8050 `
-  -v "${PWD}/config.yaml:/app/config.yaml:ro" `
-  -v inspect-data:/data `
+docker run --rm --name llm-api-inspect -p 8050:8050 `
+  -e INSPECT_CONFIG=/app/runtime/config.yaml `
+  -v "${PWD}:/app/runtime" `
+  llm-api-inspect
+```
+
+## 日志
+
+应用日志输出到 stdout/stderr，由 Docker 接管，不写到容器内部的日志文件。
+
+查看实时日志：
+
+```bash
+docker logs -f llm-api-inspect
+```
+
+设置日志级别：
+
+```bash
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
+  -v "$(pwd):/app/runtime" \
+  llm-api-inspect
+```
+
+SELinux 主机使用：
+
+```bash
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
+  -v "$(pwd):/app/runtime:Z" \
   llm-api-inspect
 ```
 

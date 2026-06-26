@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import logging
 import math
 import os
 
@@ -19,8 +20,23 @@ FAILURE_VALUE = -500
 PAGE_REFRESH_MS = 15_000
 
 
-config = load_config("config.yaml")
+def configure_logging() -> None:
+    level_name = os.getenv("INSPECT_LOG_LEVEL", "INFO").upper()
+    level = getattr(logging, level_name, logging.INFO)
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+
+configure_logging()
+logger = logging.getLogger(__name__)
+
+config_path = os.getenv("INSPECT_CONFIG", "config.yaml")
+logger.info("Loading config: %s", config_path)
+config = load_config(config_path)
 init_db(config.global_config.database_path)
+logger.info("SQLite database: %s", config.global_config.database_path)
 scheduler = ProbeScheduler(config)
 scheduler.start()
 

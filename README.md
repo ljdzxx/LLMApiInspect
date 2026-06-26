@@ -65,6 +65,7 @@ Optional runtime environment variables:
 INSPECT_HOST=0.0.0.0
 INSPECT_PORT=8050
 INSPECT_DEBUG=1
+INSPECT_CONFIG=config.yaml
 ```
 
 ## Docker Run
@@ -75,28 +76,69 @@ Build the image:
 docker build -t llm-api-inspect .
 ```
 
-Run with a mounted config file:
+Run with the project directory mounted as runtime data on Linux/macOS:
 
 ```bash
-docker run --rm -p 8050:8050 \
-  -v "$(pwd)/config.yaml:/app/config.yaml:ro" \
-  -v inspect-data:/data \
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -v "$(pwd):/app/runtime" \
   llm-api-inspect
 ```
 
-For persistent SQLite data in Docker, set this in `config.yaml`:
+On Linux hosts with SELinux enabled, use `:Z` on the bind mount:
+
+```bash
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -v "$(pwd):/app/runtime:Z" \
+  llm-api-inspect
+```
+
+Set SQLite to a path under the project data directory:
 
 ```yaml
 global:
-  database_path: /data/inspect.db
+  database_path: data/inspect.db
 ```
+
+The SQLite file will be persisted on the host at `./data/inspect.db`.
 
 On PowerShell, use:
 
 ```powershell
-docker run --rm -p 8050:8050 `
-  -v "${PWD}/config.yaml:/app/config.yaml:ro" `
-  -v inspect-data:/data `
+docker run --rm --name llm-api-inspect -p 8050:8050 `
+  -e INSPECT_CONFIG=/app/runtime/config.yaml `
+  -v "${PWD}:/app/runtime" `
+  llm-api-inspect
+```
+
+## Logs
+
+The app writes logs to stdout/stderr. Docker captures them, so logs are not written to files inside the container.
+
+View live logs:
+
+```bash
+docker logs -f llm-api-inspect
+```
+
+Set log level:
+
+```bash
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
+  -v "$(pwd):/app/runtime" \
+  llm-api-inspect
+```
+
+On SELinux hosts:
+
+```bash
+docker run --rm --name llm-api-inspect -p 8050:8050 \
+  -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
+  -v "$(pwd):/app/runtime:Z" \
   llm-api-inspect
 ```
 

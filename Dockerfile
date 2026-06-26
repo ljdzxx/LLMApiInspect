@@ -13,10 +13,8 @@ COPY requirements.txt .
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt
 
-COPY app.py page_demo.py README.md ./
+COPY app.py page_demo.py README.md README_CN.md ./
 COPY inspect_core ./inspect_core
-
-RUN mkdir -p /data
 
 EXPOSE 8050
 

@@ -92,7 +92,7 @@ def build_layout() -> html.Div:
                 [
                     html.A(
                         [
-                            html.Img(src="/assets/github.svg", className="github-icon", alt="GitHub"),
+                            html.Img(src=app.get_asset_url("github.svg"), className="github-icon", alt="GitHub"),
                             "LLMApiInspect",
                         ],
                         href="https://github.com/ljdzxx/LLMApiInspect",

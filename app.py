@@ -90,7 +90,17 @@ def build_layout() -> html.Div:
             ),
             html.Footer(
                 [
-                    "Powered by ",
+                    html.A(
+                        [
+                            html.Img(src="/assets/github.svg", className="github-icon", alt="GitHub"),
+                            "LLMApiInspect",
+                        ],
+                        href="https://github.com/ljdzxx/LLMApiInspect",
+                        target="_blank",
+                        rel="noreferrer",
+                        className="footer-link",
+                    ),
+                    " Powered by ",
                     html.A("JuCodex.com", href="https://JuCodex.com", target="_blank", rel="noreferrer"),
                 ],
                 className="page-footer",
@@ -248,6 +258,16 @@ app.index_string = """
             }
             .page-footer a:hover {
                 text-decoration: underline;
+            }
+            .footer-link {
+                align-items: center;
+                display: inline-flex;
+                gap: 5px;
+                vertical-align: middle;
+            }
+            .github-icon {
+                height: 14px;
+                width: 14px;
             }
             
             @media (max-width: 760px) {

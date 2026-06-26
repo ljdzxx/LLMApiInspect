@@ -42,6 +42,7 @@ scheduler.start()
 
 app = Dash(__name__)
 app.title = "LLM API Inspect"
+server = app.server
 
 
 def build_layout() -> html.Div:

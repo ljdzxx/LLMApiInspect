@@ -76,11 +76,12 @@ Build the image:
 docker build -t llm-api-inspect .
 ```
 
-Run with the project directory mounted as runtime data on Linux/macOS:
+Run in production with the project directory mounted as runtime data:
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
+docker run -d --name llm-api-inspect -p 8050:8050 \
   -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
   -v "$(pwd):/app/runtime" \
   llm-api-inspect
 ```
@@ -88,11 +89,14 @@ docker run --rm --name llm-api-inspect -p 8050:8050 \
 On Linux hosts with SELinux enabled, use `:Z` on the bind mount:
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
+docker run -d --name llm-api-inspect -p 8050:8050 \
   -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
   -v "$(pwd):/app/runtime:Z" \
   llm-api-inspect
 ```
+
+The same commands work with Docker by replacing `docker` with `docker`.
 
 Set SQLite to a path under the project data directory:
 
@@ -106,15 +110,16 @@ The SQLite file will be persisted on the host at `./data/inspect.db`.
 On PowerShell, use:
 
 ```powershell
-docker run --rm --name llm-api-inspect -p 8050:8050 `
+docker run -d --name llm-api-inspect -p 8050:8050 `
   -e INSPECT_CONFIG=/app/runtime/config.yaml `
+  -e INSPECT_LOG_LEVEL=INFO `
   -v "${PWD}:/app/runtime" `
   llm-api-inspect
 ```
 
 ## Logs
 
-The app writes logs to stdout/stderr. Docker captures them, so logs are not written to files inside the container.
+The app writes logs to stdout/stderr. docker/Docker captures them, so logs are not written to files inside the container.
 
 View live logs:
 
@@ -122,25 +127,31 @@ View live logs:
 docker logs -f llm-api-inspect
 ```
 
-Set log level:
+Stop the container:
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
-  -e INSPECT_CONFIG=/app/runtime/config.yaml \
-  -e INSPECT_LOG_LEVEL=INFO \
-  -v "$(pwd):/app/runtime" \
-  llm-api-inspect
+docker stop llm-api-inspect
 ```
 
-On SELinux hosts:
+Remove it after stopping:
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
-  -e INSPECT_CONFIG=/app/runtime/config.yaml \
-  -e INSPECT_LOG_LEVEL=INFO \
-  -v "$(pwd):/app/runtime:Z" \
-  llm-api-inspect
+docker rm llm-api-inspect
 ```
+
+## Production Server
+
+The container starts the app with Gunicorn, not the Flask development server.
+
+Default Gunicorn settings:
+
+```text
+GUNICORN_WORKERS=1
+GUNICORN_THREADS=8
+GUNICORN_TIMEOUT=120
+```
+
+Keep `GUNICORN_WORKERS=1` unless the scheduler is moved to a separate process. Multiple workers would start multiple in-process schedulers and duplicate probes.
 
 ## Configuration
 

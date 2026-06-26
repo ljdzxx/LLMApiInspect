@@ -76,11 +76,12 @@ INSPECT_CONFIG=config.yaml
 docker build -t llm-api-inspect .
 ```
 
-Linux/macOS 下，运行时挂载项目目录作为运行数据目录：
+生产环境后台运行，挂载项目目录作为运行数据目录：
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
+docker run -d --name llm-api-inspect -p 8050:8050 \
   -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
   -v "$(pwd):/app/runtime" \
   llm-api-inspect
 ```
@@ -88,11 +89,14 @@ docker run --rm --name llm-api-inspect -p 8050:8050 \
 如果 Linux 主机启用了 SELinux，bind mount 需要加 `:Z`：
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
+docker run -d --name llm-api-inspect -p 8050:8050 \
   -e INSPECT_CONFIG=/app/runtime/config.yaml \
+  -e INSPECT_LOG_LEVEL=INFO \
   -v "$(pwd):/app/runtime:Z" \
   llm-api-inspect
 ```
+
+如果使用 Docker，把命令里的 `docker` 换成 `docker` 即可。
 
 SQLite 路径配置为项目数据目录下的文件：
 
@@ -106,15 +110,16 @@ global:
 PowerShell 示例：
 
 ```powershell
-docker run --rm --name llm-api-inspect -p 8050:8050 `
+docker run -d --name llm-api-inspect -p 8050:8050 `
   -e INSPECT_CONFIG=/app/runtime/config.yaml `
+  -e INSPECT_LOG_LEVEL=INFO `
   -v "${PWD}:/app/runtime" `
   llm-api-inspect
 ```
 
 ## 日志
 
-应用日志输出到 stdout/stderr，由 Docker 接管，不写到容器内部的日志文件。
+应用日志输出到 stdout/stderr，由 docker/Docker 接管，不写到容器内部的日志文件。
 
 查看实时日志：
 
@@ -122,25 +127,31 @@ docker run --rm --name llm-api-inspect -p 8050:8050 `
 docker logs -f llm-api-inspect
 ```
 
-设置日志级别：
+停止容器：
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
-  -e INSPECT_CONFIG=/app/runtime/config.yaml \
-  -e INSPECT_LOG_LEVEL=INFO \
-  -v "$(pwd):/app/runtime" \
-  llm-api-inspect
+docker stop llm-api-inspect
 ```
 
-SELinux 主机使用：
+停止后删除容器：
 
 ```bash
-docker run --rm --name llm-api-inspect -p 8050:8050 \
-  -e INSPECT_CONFIG=/app/runtime/config.yaml \
-  -e INSPECT_LOG_LEVEL=INFO \
-  -v "$(pwd):/app/runtime:Z" \
-  llm-api-inspect
+docker rm llm-api-inspect
 ```
+
+## 生产服务器
+
+容器内使用 Gunicorn 启动应用，不再使用 Flask 开发服务器。
+
+默认 Gunicorn 配置：
+
+```text
+GUNICORN_WORKERS=1
+GUNICORN_THREADS=8
+GUNICORN_TIMEOUT=120
+```
+
+除非把调度器拆成独立进程，否则不要把 `GUNICORN_WORKERS` 调大。多个 worker 会启动多个进程内调度器，导致重复探测。
 
 ## 配置说明
 

@@ -18,6 +18,7 @@ RUN python -m pip install --upgrade pip \
 
 COPY app.py page_demo.py README.md README_CN.md ./
 COPY inspect_core ./inspect_core
+COPY assets ./assets
 
 EXPOSE 8050
 

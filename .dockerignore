@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.log
+*.err.log
+*.db
+*.db-shm
+*.db-wal
+.git/
+.gitignore
+config.yaml

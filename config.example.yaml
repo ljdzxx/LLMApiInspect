@@ -1,0 +1,55 @@
+global:
+  interval_minutes: 5
+  window_hours: 24
+  timeout_ms: 30000
+  database_path: inspect.db
+
+colors:
+  no_data: "#e5e7eb"
+  failure: "#111827"
+  latency_scale:
+    - latency_ms: 0
+      color: "#dcfce7"
+    - latency_ms: 100
+      color: "#22c55e"
+    - latency_ms: 300
+      color: "#f4d35e"
+    - latency_ms: 500
+      color: "#f97316"
+    - latency_ms: 1200
+      color: "#991b1b"
+    - latency_ms: 3000
+      color: "#450a0a"
+
+targets:
+  - title: OpenAI Chat Example
+    subtitle: gpt-4.1-mini
+    base_url: https://api.openai.com
+    api_key: sk-replace-me
+    protocol: openai_chat
+    model: gpt-4.1-mini
+    enabled: false
+
+  - title: OpenAI Responses Example
+    subtitle: gpt-4.1-mini
+    base_url: https://api.openai.com
+    api_key: sk-replace-me
+    protocol: openai_responses
+    model: gpt-4.1-mini
+    enabled: false
+
+  - title: Anthropic Example
+    subtitle: claude-sonnet
+    base_url: https://api.anthropic.com
+    api_key: sk-ant-replace-me
+    protocol: anthropic_messages
+    model: claude-sonnet-4-20250514
+    enabled: false
+
+  - title: Gemini Example
+    subtitle: gemini flash
+    base_url: https://generativelanguage.googleapis.com
+    api_key: replace-me
+    protocol: gemini_generate
+    model: gemini-2.5-flash
+    enabled: false

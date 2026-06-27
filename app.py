@@ -4,8 +4,11 @@ from datetime import datetime
 import logging
 import math
 import os
+from pathlib import Path
+import shutil
 
 from dash import Dash, Input, Output, dcc, html
+import plotly
 import plotly.graph_objects as go
 
 from inspect_core.config import AppConfig, ColorConfig, TargetConfig, load_config
@@ -31,6 +34,19 @@ def configure_logging() -> None:
 
 configure_logging()
 logger = logging.getLogger(__name__)
+
+
+def ensure_plotly_asset() -> None:
+    source = Path(plotly.__file__).parent / "package_data" / "plotly.min.js"
+    target = Path(__file__).parent / "assets" / "plotly.min.js"
+    if target.exists() and target.stat().st_size > 0:
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+    logger.info("Prepared Plotly asset: %s", target)
+
+
+ensure_plotly_asset()
 
 config_path = os.getenv("INSPECT_CONFIG", "config.yaml")
 logger.info("Loading config: %s", config_path)
@@ -76,10 +92,12 @@ def build_layout() -> html.Div:
                 ],
                 className="header",
             ),
-            # 热力图动态容器：内部会为每个监控目标生成独立的卡片
-            html.Div(
-                id="latency-heatmap-container",
-                className="graph-container",
+            dcc.Loading(
+                html.Div(
+                    id="latency-heatmap-container",
+                    className="graph-container",
+                ),
+                type="default",
             ),
             html.Div(
                 [
@@ -206,7 +224,6 @@ app.index_string = """
                 text-align: left;
                 word-break: break-all;
             }
-            
             .below {
                 display: grid;
                 gap: 14px;
@@ -292,7 +309,6 @@ app.index_string = """
 """
 
 
-# 动态回调：重新生成所有目标的卡片及对应的单行热力图
 @app.callback(
     Output("latency-heatmap-container", "children"),
     Output("last-updated", "children"),

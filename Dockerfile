@@ -19,6 +19,7 @@ RUN python -m pip install --upgrade pip \
 COPY app.py page_demo.py README.md README_CN.md ./
 COPY inspect_core ./inspect_core
 COPY assets ./assets
+RUN python -c "import pathlib, shutil, plotly; src=pathlib.Path(plotly.__file__).parent/'package_data'/'plotly.min.js'; dst=pathlib.Path('/app/assets/plotly.min.js'); dst.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(src, dst)"
 
 EXPOSE 8050
 

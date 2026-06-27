@@ -7,3 +7,4 @@ __pycache__/
 *.db-wal
 data/
 config.yaml
+assets/plotly.min.js
